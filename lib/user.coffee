@@ -1,6 +1,6 @@
-redis = require("redis").createClient()
+redis   = require("redis").createClient()
 Promise = require("promise")
-_ = require("lodash")
+_       = require("lodash")
 
 redis.on "error", (err) ->
   console.error "[redis] connection error: #{client.host}:#{client.port}"
@@ -8,11 +8,10 @@ redis.on "error", (err) ->
 
 class User
 
-  @key: (jid) -> "user:#{jid.toString()}"
+  @key: (jid) -> "user:#{jid}"
 
   constructor: (jid, attrs = {}) ->
     @jid = jid
-    @key = User.key(jid)
     @attrs = attrs
 
   @find: (jid) ->

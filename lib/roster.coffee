@@ -1,51 +1,38 @@
-var util = require('util');
-var EventEmitter = require('events').EventEmitter;
-var redis = require("redis"),
-    client = redis.createClient();
-    
-client.on("error", function (err) {
-    console.log("Redis connection error to " + client.host + ":" + client.port + " - " + err);
-});
+redis      = require("redis").createClient()
+Promise    = require("promise")
+RosterItem = require("./roster_item.coffee")
 
-var Roster = function(owner) {
-    this.owner = owner;
-    this.items = [];
-    return this;
-};
-util.inherits(Roster, EventEmitter);
+redis.on "error", (err) ->
+  console.error "[redis] connection error: #{client.host}:#{client.port}"
+  console.error "[redis] #{err}"
 
-var RosterItem = function(roster, jid, state, name) {
-    this.roster = roster;
-    this.jid = jid;
-    this.state = state;
-    this.name = name;
-}
+class Roster
 
-Roster.key = function(jid) {
-    return "roster:" + jid.toString();
-};
+  @key: (jid) -> "roster:#{jid}"
 
-RosterItem.key = function(owner, jid) {
-    return "rosterItem:" + owner.toString() + ":" + jid.toString();
-}
+  constructor: (jid) ->
+    @owner = jid
+    @items = []
+    @key = Roster.key(jid)
 
-Roster.find = function(jid, cb) {
-    var roster = new Roster(jid);
-    roster.refresh(cb);
-};
+  @find: (jid) -> new Roster(jid).refresh()
 
-Roster.prototype.refresh = function(cb) {
-    var self = this;
-    client.smembers(Roster.key(self.owner), function(err, obj) {
-        var counts = 0;
-        if(!obj || obj.length == 0) {
-            cb(self);
-        }
-        else {
-            self.items = []; // clear the current items.
-            obj.forEach(function(contact) {
-                RosterItem.find(self, contact, function(item) {
-                    counts++;
+  refresh: ->
+    roster = @
+
+    return new Promise (fulfill, reject) ->
+      redis.smembers @key, (err, contacts) ->
+        return reject(err) if err?
+
+        roster.items = []
+
+        # no contact list, or the list is empty
+        if !contacts? or contacts.length is 0
+          return fulfill(roster)
+
+        contacts.forEach (contact) ->
+          RosterItem.find(roster, contact).then (item) ->
+            counts++;
                     self.items.push(item);
                     if(counts == obj.length) {
                         cb(self);
@@ -111,7 +98,7 @@ RosterItem.find = function(roster, jid, cb) {
     client.hgetall(RosterItem.key(roster.owner, jid), function(err, obj) {
         if(isEmpty(obj)) {
             cb(new RosterItem(roster, jid, "none", ""));
-        } 
+        }
         else {
             cb(new RosterItem(roster, jid, obj.state, obj.name));
         }
