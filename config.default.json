@@ -1,0 +1,21 @@
+{
+  "modules": [
+    "logger",
+    "router",
+    "offline",
+    "version",
+    "presence",
+    "roster",
+    "disco_info",
+    "vcard",
+    "websocket",
+    "s2s",
+    "ping"
+  ],
+  "port": 5222,
+  "domain": "localhost",
+  "logger": false,
+  "websocket": {
+    "port": 5280
+  }
+}
