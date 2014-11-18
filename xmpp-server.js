@@ -2,7 +2,8 @@
 
 var path = require('path'),
     config = require('jsconfig'),
-    defaultConfigPath = path.join(__dirname, "config.default.js");
+    defaultConfigPath = path.join(__dirname, "config.default.json");
+
 config.defaults(defaultConfigPath);
 
 // environment parameters
@@ -33,6 +34,3 @@ config.load(function (args, opts) {
         // Server ready!
     });
 });
-
-
-
